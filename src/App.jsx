@@ -1,13 +1,23 @@
 import * as React from 'react';
 import PropTypes from 'prop-types';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
+import {
+  Drawer,
+  Toolbar,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+} from '@mui/material';
 import { createTheme } from '@mui/material/styles';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import { AppProvider } from '@toolpad/core/AppProvider';
 import { DashboardLayout } from '@toolpad/core/DashboardLayout';
-import { DemoProvider, useDemoRouter } from '@toolpad/core/internal';
+
+import Dashboard from './features/dashboard/Dashboard';
+import Sales from './features/sales/Sales';
+
+const drawerWidth = 240;
 
 const NAVIGATION = [
   {
@@ -16,8 +26,8 @@ const NAVIGATION = [
     icon: <DashboardIcon />,
   },
   {
-    segment: 'orders',
-    title: 'Orders',
+    segment: 'sales',
+    title: 'Sales',
     icon: <ShoppingCartIcon />,
   },
 ];
@@ -38,64 +48,97 @@ const demoTheme = createTheme({
   },
 });
 
-function DemoPageContent({ pathname }) {
+function CustomRouterProvider({ children }) {
+  const [pathname, setPathname] = React.useState('dashboard');
+
+  const router = {
+    pathname,
+    navigate: (segment) => {
+      const cleaned = segment.replace(/^\//, '').toLowerCase();
+      setPathname(cleaned);
+    },
+    searchParams: new URLSearchParams(),
+  };
+
   return (
-    <Box
-      sx={{
-        py: 4,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        textAlign: 'center',
+    <AppProvider
+      navigation={NAVIGATION}
+      router={router}
+      branding={{
+        logo: <img src="https://mui.com/static/logo.png" alt="MUI logo" />,
+        title: 'Clen Cuts',
+        homeUrl: 'dashboard',
       }}
+      theme={demoTheme}
     >
-      <Typography>Dashboard content for {pathname}</Typography>
-    </Box>
+      {children(router)}
+    </AppProvider>
   );
 }
 
-DemoPageContent.propTypes = {
+function PageContent({ pathname }) {
+  const route = pathname.replace(/^\//, '').toLowerCase();
+  switch (route) {
+    case 'dashboard':
+      return <Dashboard />;
+    case 'sales':
+      return <Sales />;
+    default:
+      return <div>Page not found: {route}</div>;
+  }
+}
+
+PageContent.propTypes = {
   pathname: PropTypes.string.isRequired,
 };
 
-function DashboardLayoutBranding(props) {
-  const { window } = props;
-
-  const router = useDemoRouter('/dashboard');
-
-  // Remove this const when copying and pasting into your project.
-  const demoWindow = window !== undefined ? window() : undefined;
-
+function SidebarNavigation({ router }) {
   return (
-    // Remove this provider when copying and pasting into your project.
-    <DemoProvider window={demoWindow}>
-      {/* preview-start */}
-      <AppProvider
-        navigation={NAVIGATION}
-        branding={{
-          logo: <img src="https://mui.com/static/logo.png" alt="MUI logo" />,
-          title: 'Clen Cuts',
-          homeUrl: '/toolpad/core/introduction',
-        }}
-        router={router}
-        theme={demoTheme}
-        window={demoWindow}
-      >
-        <DashboardLayout>
-          <DemoPageContent pathname={router.pathname} />
-        </DashboardLayout>
-      </AppProvider>
-      {/* preview-end */}
-    </DemoProvider>
+    <Drawer
+      variant="permanent"
+      sx={{
+        width: drawerWidth,
+        flexShrink: 0,
+        [`& .MuiDrawer-paper`]: {
+          width: drawerWidth,
+          boxSizing: 'border-box',
+        },
+      }}
+    >
+      <Toolbar />
+      <List>
+        {NAVIGATION.map((item) => (
+          <ListItemButton
+            key={item.segment}
+            selected={router.pathname === item.segment}
+            onClick={() => router.navigate(item.segment)}
+          >
+            <ListItemIcon>{item.icon}</ListItemIcon>
+            <ListItemText primary={item.title} />
+          </ListItemButton>
+        ))}
+      </List>
+    </Drawer>
   );
 }
 
-DashboardLayoutBranding.propTypes = {
-  /**
-   * Injected by the documentation to work in an iframe.
-   * Remove this when copying and pasting into your project.
-   */
-  window: PropTypes.func,
+SidebarNavigation.propTypes = {
+  router: PropTypes.shape({
+    pathname: PropTypes.string.isRequired,
+    navigate: PropTypes.func.isRequired,
+  }).isRequired,
 };
+
+function DashboardLayoutBranding() {
+  return (
+    <CustomRouterProvider>
+      {(router) => (
+        <DashboardLayout sidebarContent={<SidebarNavigation router={router} />}>
+          <PageContent pathname={router.pathname} />
+        </DashboardLayout>
+      )}
+    </CustomRouterProvider>
+  );
+}
 
 export default DashboardLayoutBranding;
