@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import { invoke } from "@tauri-apps/api/core";
+import StockFilter from "./StockFilter";
 
 function Dashboard() {
   const [categories, setCategories] = useState([]);
@@ -67,17 +68,16 @@ function Dashboard() {
   return (
     <div className="p-4 space-y-8">
       <div className="container text-center">
-  <div className="row">
-    <div className="col">
-           <HighchartsReact highcharts={Highcharts} options={pieOptions} />
-    </div>
-    <div className="col">
-      Column
-    </div>
-  </div>
-</div>
+        <div className="row">
+          <div className="col">
+            <HighchartsReact highcharts={Highcharts} options={pieOptions} />
+          </div>
+          <div className="col">
+            <StockFilter categories={categories} />
+          </div>
+        </div>
+      </div>
       <HighchartsReact highcharts={Highcharts} options={columnOptions} />
-
     </div>
   );
 }

@@ -7,3 +7,4 @@ npm install highcharts --save
 npm install highcharts-react-official
 npm install @tauri-apps/api
 npm i bootstrap@5.3.6
+npm install date-fns
